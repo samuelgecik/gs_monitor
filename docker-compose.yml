@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.monitor
+    container_name: monitor
+    env_file:
+      - .env
+    volumes:
+      - data:/app/data:rw
+    user: "${MONITOR_UID:-1000}:${MONITOR_GID:-1000}"
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: dashboard
+    env_file:
+      - .env
+    volumes:
+      - data:/app/data:ro
+    user: "${DASHBOARD_UID:-1000}:${DASHBOARD_GID:-1000}"
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+volumes:
+  data:
+    driver: local
