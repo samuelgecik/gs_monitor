@@ -19,6 +19,8 @@ services:
       - .env
     volumes:
       - data:/app/data:ro
+    ports:
+      - "127.0.0.1:8501:8501"
     user: "${DASHBOARD_UID:-1000}:${DASHBOARD_GID:-1000}"
     restart: unless-stopped
 
