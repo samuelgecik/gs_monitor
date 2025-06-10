@@ -46,7 +46,7 @@ def load_data():
         if conn:
             conn.close()
 
-st.set_page_config(page_title="Telegram Group Monitor", layout="wide")
+st.set_page_config(page_title="GS Group Monitor", layout="wide")
 st.title("Telegram Group Member Monitor")
 
 data_df = load_data()
