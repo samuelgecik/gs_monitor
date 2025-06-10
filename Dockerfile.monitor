@@ -14,7 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all necessary application files into the container.
 COPY main_monitor.py .
 COPY db_utils.py .
-COPY config.ini .
 
 # --- Permissions and User Setup ---
 # 1. Create the non-root user that will run the application.
