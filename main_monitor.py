@@ -1,7 +1,8 @@
 import asyncio
-import configparser
+# import configparser  # Removed: no longer needed
 import logging
 import os
+from dotenv import load_dotenv
 
 from telethon import TelegramClient, types, functions # Added functions
 from telethon.errors import SessionPasswordNeededError
@@ -9,37 +10,21 @@ from telethon.tl.types import User, Chat, Channel
 
 import db_utils
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.ini')
+# CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.ini')  # Removed: config file no longer used
 
 def load_config():
-    """Loads configuration from environment variables, falling back to config.ini."""
-    if not os.path.exists(CONFIG_FILE):
-        logging.error(f"Configuration file {CONFIG_FILE} not found. Please copy config.ini.template to config.ini and fill it out.")
-        raise FileNotFoundError(f"Configuration file {CONFIG_FILE} not found.")
-
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
-
-    # Load sensitive values from environment variables first, then config.ini
-    def get_env_or_config(env_var, section, option, fallback=None, is_int=False):
-        val = os.environ.get(env_var)
-        if val is not None:
-            return int(val) if is_int else val
-        try:
-            if is_int:
-                return config.getint(section, option)
-            return config.get(section, option, fallback=fallback)
-        except (configparser.NoSectionError, configparser.NoOptionError):
-            return fallback
-
-    api_id = get_env_or_config('API_ID', 'Telegram', 'api_id', is_int=True)
-    api_hash = get_env_or_config('API_HASH', 'Telegram', 'api_hash')
-    phone_number = get_env_or_config('PHONE_NUMBER', 'Telegram', 'phone_number')
-    target_group_entity = get_env_or_config('TARGET_GROUP_ENTITY', 'Telegram', 'target_group_entity')
-    db_path_config = get_env_or_config('DB_PATH', 'Database', 'db_path', fallback=None)
+    """Loads configuration exclusively from environment variables."""
+    api_id = int(os.environ["API_ID"])
+    api_hash = os.environ["API_HASH"]
+    phone_number = os.environ["PHONE_NUMBER"]
+    target_group_entity = os.environ["TARGET_GROUP_ENTITY"]
+    db_path_config = os.environ.get("DB_PATH", None)
 
     # Construct session name from phone number to avoid issues with special characters
     session_name = phone_number.replace('+', '').replace(' ', '') + '.session' if phone_number else None
@@ -48,7 +33,7 @@ def load_config():
     if db_path_config and not os.path.isabs(db_path_config):
         db_path = os.path.join(os.path.dirname(__file__), db_path_config)
     else:
-        db_path = db_path_config # Can be None to use default from db_utils or an absolute path
+        db_path = db_path_config  # Can be None to use default from db_utils or an absolute path
 
     return api_id, api_hash, phone_number, target_group_entity, session_name, db_path
 
@@ -178,8 +163,11 @@ async def main():
     """Main function to monitor Telegram group and store member count."""
     try:
         api_id, api_hash, phone_number, target_group_entity, session_name, db_path_cfg = load_config()
-    except (FileNotFoundError, ValueError) as e:
-        # Error already logged by load_config
+    except KeyError as e:
+        logging.error(f"Missing required environment variable: {e}")
+        return
+    except ValueError as e:
+        logging.error(f"Invalid value in environment variable: {e}")
         return
 
     # Initialize Telegram client
@@ -219,8 +207,8 @@ async def main():
 
     except ConnectionError as e: # More specific Telethon connection error
         logging.error(f"Telegram connection error: {e}. Please check your network and API credentials.")
-    except configparser.Error as e: # Catch potential configparser issues not caught in load_config
-        logging.error(f"Configuration file error: {e}")
+    # except configparser.Error as e: # Removed: configparser no longer used
+    #     logging.error(f"Configuration file error: {e}")
     except Exception as e:
         logging.error(f"An unexpected error occurred in main_monitor: {e}", exc_info=True)
     finally:

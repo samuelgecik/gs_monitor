@@ -2,3 +2,5 @@ telethon
 streamlit
 pandas
 plotly
+
+python-dotenv
