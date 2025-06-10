@@ -5,10 +5,11 @@ FROM python:3.10-slim-bookworm
 WORKDIR /app
 
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY main_monitor.py .
 COPY db_utils.py .
 
-RUN pip install --no-cache-dir -r requirements.txt
 
 RUN useradd -m appuser
 USER appuser
