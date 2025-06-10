@@ -27,7 +27,10 @@ def load_config():
     db_path_config = os.environ.get("DB_PATH", None)
 
     # Construct session name from phone number to avoid issues with special characters
-    session_name = phone_number.replace('+', '').replace(' ', '') + '.session' if phone_number else None
+    # The session_name will be the path prefix, e.g., "data/your_phone_digits"
+    # Telethon will append ".session" to this path.
+    base_session_name = phone_number.replace('+', '').replace(' ', '')
+    session_name = os.path.join("data", base_session_name)
 
     # Construct absolute path for db_path if it's relative
     if db_path_config and not os.path.isabs(db_path_config):
@@ -171,7 +174,7 @@ async def main():
         return
 
     # Initialize Telegram client
-    # The session file will be created in the same directory as this script.
+    # The session file will be created in the 'data/' subdirectory (e.g., data/your_phone_digits.session).
     client = TelegramClient(session_name, api_id, api_hash)
     db_conn = None
 
