@@ -11,7 +11,13 @@ COPY main_monitor.py .
 COPY db_utils.py .
 
 
+# Create the non-root user
 RUN useradd -m appuser
+
+# Change ownership of the app directory to the new user
+RUN chown -R appuser:appuser /app
+
+# Now, switch to the non-root user
 USER appuser
 
 ENTRYPOINT ["python", "main_monitor.py"]
