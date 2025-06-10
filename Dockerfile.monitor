@@ -4,20 +4,33 @@ FROM python:3.10-slim-bookworm
 
 WORKDIR /app
 
+# --- Dependency Installation ---
+# Copy only the requirements file first to leverage Docker's layer caching.
+# This layer will only be rebuilt if requirements.txt changes.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# --- Application Code ---
+# Copy all necessary application files into the container.
 COPY main_monitor.py .
 COPY db_utils.py .
+COPY config.ini .
 
-
-# Create the non-root user
+# --- Permissions and User Setup ---
+# 1. Create the non-root user that will run the application.
 RUN useradd -m appuser
 
-# Change ownership of the app directory to the new user
+# 2. Create the data directory that will be used for the volume mount.
+#    This ensures the directory exists before the volume is attached at runtime.
+RUN mkdir -p /app/data
+
+# 3. Change ownership of ALL files and directories in /app to the new user.
+#    This gives the script permission to create session and database files.
 RUN chown -R appuser:appuser /app
 
-# Now, switch to the non-root user
+# 4. Switch to the non-root user for security.
 USER appuser
 
+# --- Execution ---
+# Set the command to run when the container starts.
 ENTRYPOINT ["python", "main_monitor.py"]
